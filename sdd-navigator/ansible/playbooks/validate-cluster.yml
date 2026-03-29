@@ -1,0 +1,45 @@
+---
+- name: Validate Kubernetes Cluster Health
+  hosts: k8s_cluster
+  gather_facts: yes
+  
+  tasks:
+    - name: Check node status
+      command: kubectl get nodes
+      register: nodes_status
+      changed_when: false
+      when: inventory_hostname == groups['k8s_cluster'][0]
+
+    - name: Display node status
+      debug:
+        var: nodes_status.stdout_lines
+      when: inventory_hostname == groups['k8s_cluster'][0]
+
+    - name: Check pods in all namespaces
+      command: kubectl get pods --all-namespaces
+      register: pods_status
+      changed_when: false
+      when: inventory_hostname == groups['k8s_cluster'][0]
+
+    - name: Display pods status
+      debug:
+        var: pods_status.stdout_lines
+      when: inventory_hostname == groups['k8s_cluster'][0]
+
+    - name: Validate critical pods are running
+      command: kubectl get pods -n kube-system -o json
+      register: critical_pods
+      changed_when: false
+      when: inventory_hostname == groups['k8s_cluster'][0]
+
+    - name: Check certificate expiration
+      command: kubeadm certs check-expiration
+      register: certs_expiry
+      changed_when: false
+      when: inventory_hostname == groups['k8s_cluster'][0]
+
+    - name: Validate Helm releases
+      command: helm list -A
+      register: helm_releases
+      changed_when: false
+      when: inventory_hostname == groups['k8s_cluster'][0]

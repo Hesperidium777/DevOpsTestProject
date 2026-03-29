@@ -1,0 +1,65 @@
+---
+- name: Deploy SDD Navigator Application
+  hosts: localhost
+  gather_facts: yes
+  vars:
+    helm_release_name: "sdd-navigator"
+    helm_chart_path: "../../helm/sdd-navigator"
+    namespace: "sdd-navigator"
+    environment: "{{ lookup('env', 'ENVIRONMENT') | default('dev', true) }}"
+    
+  tasks:
+    - name: Create namespace
+      kubernetes.core.k8s:
+        name: "{{ namespace }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Add Helm repositories
+      kubernetes.core.helm_repository:
+        name: "{{ item.name }}"
+        repo_url: "{{ item.url }}"
+        state: present
+      loop:
+        - { name: "bitnami", url: "https://charts.bitnami.com/bitnami" }
+        - { name: "ingress-nginx", url: "https://kubernetes.github.io/ingress-nginx" }
+
+    - name: Deploy application with Helm
+      kubernetes.core.helm:
+        name: "{{ helm_release_name }}"
+        chart_ref: "{{ helm_chart_path }}"
+        release_namespace: "{{ namespace }}"
+        values_files:
+          - "{{ helm_chart_path }}/values.yaml"
+          - "{{ helm_chart_path }}/values-{{ environment }}.yaml"
+        wait: yes
+        wait_timeout: "10m"
+        state: present
+
+    - name: Wait for pods to be ready
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: "{{ namespace }}"
+        label_selectors:
+          - app.kubernetes.io/instance={{ helm_release_name }}
+      register: pods
+      until: pods.resources | map(attribute='status.phase') | select('equalto', 'Running') | list | length == pods.resources | length
+      retries: 30
+      delay: 10
+
+    - name: Get service endpoints
+      kubernetes.core.k8s_info:
+        kind: Service
+        namespace: "{{ namespace }}"
+        name: "{{ helm_release_name }}-frontend"
+      register: service
+      failed_when: false
+
+    - name: Display deployment information
+      debug:
+        msg:
+          - "SDD Navigator deployed successfully!"
+          - "Namespace: {{ namespace }}"
+          - "Environment: {{ environment }}"
+          - "Frontend service: {{ service.resources[0].status.loadBalancer.ingress[0].ip | default('Not available') }}"
