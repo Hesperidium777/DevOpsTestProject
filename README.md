@@ -1,2 +1,5 @@
 # DevOpsTestProject
-DevOps test project
+Usage: 
+make build-api
+make build-frontend
+make deploy
