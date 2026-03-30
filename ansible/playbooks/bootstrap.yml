@@ -1,0 +1,4 @@
+- hosts: all
+  tasks:
+    - name: Ensure kubectl exists
+      command: kubectl version --client

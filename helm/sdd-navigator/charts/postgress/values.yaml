@@ -1,0 +1,4 @@
+auth:
+  username: user
+  password: pass
+  database: app

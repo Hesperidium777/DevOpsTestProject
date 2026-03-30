@@ -1,0 +1,16 @@
+apiVersion: v2
+name: sdd-navigator
+version: 0.1.0
+
+dependencies:
+  - name: api
+    version: 0.1.0
+    repository: "file://charts/api"
+
+  - name: frontend
+    version: 0.1.0
+    repository: "file://charts/frontend"
+
+  - name: postgres
+    version: 0.1.0
+    repository: "file://charts/postgres"

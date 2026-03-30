@@ -1,0 +1,19 @@
+name: CI
+
+on: [push]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+      - name: Helm lint
+        run: helm lint helm/sdd-navigator
+
+      - name: Helm template
+        run: helm template test helm/sdd-navigator

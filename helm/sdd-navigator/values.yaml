@@ -1,0 +1,15 @@
+api:
+  image:
+    repository: api
+    tag: latest
+
+frontend:
+  image:
+    repository: frontend
+    tag: latest
+
+postgres:
+  auth:
+    username: user
+    password: pass
+    database: app
